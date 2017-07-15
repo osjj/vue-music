@@ -18,7 +18,7 @@
 		  			<div class="icon">
 		  				<img v-lazy="item.imgurl" width="60" height="60">
 		  			</div>
-		  			<div class="text">
+		  			<div class="text git">
 		  				<h2 class="name">{{item.creator.name}}</h2>
 		  				<p class="desc" v-html="item.dissname"></p>
 		  			</div>
