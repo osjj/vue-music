@@ -4,11 +4,11 @@
       <i class="icon-back"></i>
     </div>
     <h1 class="title" v-html="title"></h1>
-    <div class="bg-image" :style="bgStyle" ref="bgImage">
+    <div class="bg-image" :style="bgStyle" ref="bgImage" @click="random">
       <div class="play-wrapper" ref= "play">
         <div class="play">
           <i class="icon-play"></i>
-          <span class="text"></span>
+          <span class="text">全部播放全部</span>
         </div>
       </div>
       <div class="filter" ref="filter"></div>
@@ -16,7 +16,7 @@
     <div class="bg-layer" ref="layer"></div>
     <scroll :data="songs" :listen-scroll="listenScroll" :probe-type="probeType" class="list" ref="scroll" @scroll="scroll">
       <div class="song-list-wrapper">
-        <song-list :songs="songs"></song-list>
+        <song-list @select="selectItem" :songs="songs" :rank="rank"></song-list>
       </div>
       <div class="loading-container" v-show="!songs.length">
         <loading></loading>
@@ -29,10 +29,13 @@ import SongList from 'base/song-list/song-list'
 import Scroll from 'base/scroll/scroll'
 import Loading from 'base/loading/loading'
 import {prefixStyle} from 'common/js/dom'
+import {playlistMixin} from 'common/js/mixin'
+import {mapActions, mapGetters, mapMutations} from 'vuex'
 const RESERVED_HEIGHT = 40
 const transform = prefixStyle('transform')
 const backdrop = prefixStyle('backdrop')
 export default {
+    mixins: [playlistMixin],
     props: {
       bgImage: {
         type: String,
@@ -45,6 +48,10 @@ export default {
       title: {
         type: String,
         default: ''
+      },
+      rank: {
+        type: Boolean,
+        default: false
       }
     },
     data() {
@@ -59,14 +66,15 @@ export default {
     computed: {
       bgStyle() {
         return `background-image:url(${this.bgImage})`
-      }
+      },
+      ...mapGetters([
+          'fullScreen'
+        ])
     },
     mounted() {
       this.bgImageHeight = this.$refs.bgImage.clientHeight
       this.minTranslateY = -this.bgImageHeight + RESERVED_HEIGHT
       this.$refs.scroll.$el.style.top = `${this.bgImageHeight}px`
-      this.height
-      console.log(this.$refs.scroll.$el.style.top)
     },
     methods: {
       scroll(pos) {
@@ -74,7 +82,31 @@ export default {
       },
       back() {
         this.$router.back()
-      }
+      },
+      selectItem(item, index) {
+        this.selectPlay({
+          list: this.songs,
+          index
+        })
+        this.sequencelist(this.songs)
+      },
+      random() {
+        this.randomPlay({
+          list: this.songs
+        })
+      },
+      handlePlaylist(palylist) {
+        const bottom = palylist.length > 0 ? '60px' : 0
+        this.$refs.scroll.$el.style.bottom = bottom
+        this.$refs.scroll.refresh()
+      },
+      ...mapActions([
+        'selectPlay',
+        'randomPlay'
+      ]),
+      ...mapMutations({
+        sequencelist: 'SET_SEQUENCE_LIST'
+      })
     },
     watch: {
       scrollY(newY) {
@@ -103,6 +135,11 @@ export default {
         this.$refs.bgImage.style.zIndex = zindex
         this.$refs.layer.style[transform] = `translate3d(0, ${translateY}px, 0)`
         this.$refs.bgImage.style[transform] = `scale(${scale})`
+      },
+      fullScreen(newVal) {
+        if (!newVal) {
+          this.$refs.scroll.refresh()
+        }
       }
     },
     components: {

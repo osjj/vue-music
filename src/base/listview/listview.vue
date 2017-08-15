@@ -16,9 +16,13 @@
 				</ul>
 			</li>
 		</ul>
-    <div class="list-shortcut" @touchstart.stop.prevent="onShortcutTouchStart" @touchmove.stop.prevent="onShortcutTouchMove">
+    <div class="list-shortcut" @touchstart.stop.prevent="onShortcutTouchStart" @touchmove.stop.prevent="onShortcutTouchMove" @touchend.stop.prevent="onShortcutTouchEnd">
       <ul>
-        <li class="item" v-for="(item, index) in shortcutList" :data-index="index" :class="{current:currentIndex === index}">{{item}}</li>
+        <li class="item" v-for="(item, index) in shortcutList" :data-index="index" :class="{current:currentIndex === index}">{{item}}
+            <div ref="big" class="big" v-show="bigshow === index">
+              <span>{{item}}</span>
+            </div>
+        </li>
       </ul>
     </div>
     <div class="list-fixed" ref="fixed" v-show="fixedTitle">
@@ -46,6 +50,7 @@
       this.probeType = 3
       this.listHeight = []
       this.listenScroll = true
+      this.bigshow = -1
     },
     data() {
       return {
@@ -77,6 +82,8 @@
         let firstTouch = e.touches[0]
         this.touch.pagey1 = firstTouch.pageY
         this.touch.index = anchorIndex
+        this.bigshow = parseInt(anchorIndex)
+        this.$refs.big[this.bigshow].style.display = ''
         this._scrollTo(anchorIndex)
       },
       onShortcutTouchMove(e) {
@@ -84,11 +91,26 @@
         this.touch.pagey2 = firstTouch.pageY
         let diffs = (this.touch.pagey2 - this.touch.pagey1) / 18 | 0
         let anchorIndex = parseInt(this.touch.index) + diffs
+        this.bigshow = anchorIndex
         this._scrollTo(anchorIndex)
+      },
+      onShortcutTouchEnd(e) {
+        if (!this.bigshow && this.bigshow !== 0) {
+          return
+        }
+        if (this.bigshow < 0) {
+          this.bigshow = 0
+        } else if (this.bigshow > this.listHeight.length - 2) {
+          this.bigshow = this.listHeight.length - 2
+        }
+        this.$refs.big[this.bigshow].style.display = 'none'
       },
       scroll(pos) {
         this.scrollY = pos.y
         // console.log(this.scrollY)
+      },
+      refresh() {
+        this.$refs.scroll.refresh()
       },
       selectItem(item) {
         this.$emit('select', item)
@@ -197,8 +219,25 @@
         line-height: 1
         color: $color-text-l
         font-size: $font-size-small
+        position:relative
         &.current
           color: $color-theme
+        .big
+          display:inline-block
+          position:absolute
+          left:-60px
+          top:3px
+          background:$color-text-l
+          width:15px
+          height:15px
+          font-size:12px
+          border-radius: 50%
+          transform:scale(2)
+          line-height:15px
+          padding:3px
+          text-align:center
+          span
+            font-size:$font-size-small
     .list-fixed
       position: absolute
       top: 0

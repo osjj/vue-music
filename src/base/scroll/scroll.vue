@@ -57,8 +57,11 @@
 			enable() {
 				this.scroll && this.scroll.enable()
 			},
-			scrollToElement(index) {
-				this.scroll && this.scroll.scrollToElement(index, 0)
+			scrollToElement() {
+				this.scroll && this.scroll.scrollToElement.apply(this.scroll, arguments)
+			},
+			scrollTo() {
+				this.scroll && this.scroll.scrollTo.apply(this.scroll, arguments)
 			}
 		},
 		watch: {
